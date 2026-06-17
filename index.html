@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EcoPulse 3D</title>
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://tile.openstreetmap.org" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/deck.gl@8.9.36/dist.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="map-stage" aria-label="Carte 3D EcoPulse">
+        <div id="deck" class="deck-host"></div>
+        <div class="scanline"></div>
+        <div class="map-vignette"></div>
+      </section>
+
+      <aside class="hud">
+        <header class="brand">
+          <span class="brand-mark"></span>
+          <div class="brand-copy">
+            <h1>EcoPulse 3D</h1>
+            <p>La respiration &eacute;nerg&eacute;tique des territoires</p>
+          </div>
+          <button id="about-open" class="about-button" type="button" aria-haspopup="dialog">
+            &Agrave; propos
+          </button>
+        </header>
+
+        <section class="metric-strip" aria-label="Indicateurs nationaux">
+          <div>
+            <span>Conso</span>
+            <strong id="total-consumption">...</strong>
+          </div>
+          <div>
+            <span>EnR</span>
+            <strong id="total-production">...</strong>
+          </div>
+          <div>
+            <span>Autonomie</span>
+            <strong id="total-ratio">...</strong>
+          </div>
+        </section>
+
+        <section class="panel controls" aria-label="Commandes">
+          <div class="control-row">
+            <label for="year-select">Ann&eacute;e</label>
+            <select id="year-select">
+              <option value="2024" selected>2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+              <option value="2021">2021</option>
+              <option value="2020">2020</option>
+            </select>
+          </div>
+
+          <div class="control-row">
+            <label for="energy-select">&Eacute;nergie</label>
+            <select id="energy-select">
+              <option value="Electricit&#233;" selected>&Eacute;lectricit&eacute;</option>
+              <option value="Gaz">Gaz</option>
+            </select>
+          </div>
+
+          <div class="segmented" role="group" aria-label="Vue">
+            <button id="view-france" class="active" type="button">France</button>
+            <button id="view-montreuil" type="button">Montreuil</button>
+          </div>
+
+          <label class="toggle">
+            <input id="future-toggle" type="checkbox" />
+            <span></span>
+            Mode futur
+          </label>
+
+          <div class="slider-field">
+            <div>
+              <label for="solar-slider">Solaire local</label>
+              <output id="solar-value">35%</output>
+            </div>
+            <input id="solar-slider" type="range" min="0" max="100" value="35" />
+          </div>
+
+          <div class="slider-field">
+            <div>
+              <label for="renovation-slider">R&eacute;novation</label>
+              <output id="renovation-value">22%</output>
+            </div>
+            <input id="renovation-slider" type="range" min="0" max="65" value="22" />
+          </div>
+        </section>
+
+        <section class="panel selected" aria-label="Territoire selectionne">
+          <p id="selected-kicker">Territoire</p>
+          <h2 id="selected-name">France m&eacute;tropolitaine</h2>
+          <dl>
+            <div>
+              <dt>Consommation</dt>
+              <dd id="selected-consumption">...</dd>
+            </div>
+            <div>
+              <dt>Production EnR</dt>
+              <dd id="selected-production">...</dd>
+            </div>
+            <div>
+              <dt>Indice pulse</dt>
+              <dd id="selected-pulse">...</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="legend" aria-label="Code couleur">
+          <h3>Code couleur</h3>
+          <p>EnR = energies renouvelables produites localement.</p>
+          <div><span class="swatch red"></span><strong>Rouge</strong><span>consommation elevee / deficit local</span></div>
+          <div><span class="swatch green"></span><strong>Vert</strong><span>production renouvelable locale forte</span></div>
+          <div><span class="swatch cyan"></span><strong>Bleu</strong><span>flux d'energie des sites vers la region</span></div>
+          <div><span class="swatch amber"></span><strong>Jaune</strong><span>territoire en transition</span></div>
+        </section>
+
+        <footer class="source-line">
+          ORE Data Fair | OpenStreetMap | Contours regions France GeoJSON
+        </footer>
+      </aside>
+    </main>
+
+    <div id="about-modal" class="modal-backdrop" hidden>
+      <section
+        class="about-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="about-title"
+        aria-describedby="about-summary"
+      >
+        <button id="about-close" class="modal-close" type="button" aria-label="Fermer">&times;</button>
+        <p class="modal-kicker">Projet demo</p>
+        <h2 id="about-title">Comprendre EcoPulse 3D</h2>
+        <p id="about-summary">
+          EcoPulse compare la consommation d'energie d'un territoire avec sa production locale
+          d'energies renouvelables. L'objectif est de voir rapidement les zones sous tension et
+          les territoires qui produisent davantage localement.
+        </p>
+
+        <div class="about-grid">
+          <article>
+            <h3>Carte</h3>
+            <p>
+              Le fond OpenStreetMap sert de repere geographique. Les regions restent plates pour
+              garder une lecture claire.
+            </p>
+          </article>
+          <article>
+            <h3>Anneaux</h3>
+            <p>
+              L'anneau rouge exterieur represente la consommation. L'anneau vert ou bleu interieur
+              represente la production EnR locale.
+            </p>
+          </article>
+          <article>
+            <h3>Flux</h3>
+            <p>
+              Les pictos indiquent le type de site de production. Les pointilles lumineux partent
+              de ces sites et convergent vers le centre de la region, comme une alimentation locale.
+            </p>
+          </article>
+          <article>
+            <h3>Mode futur</h3>
+            <p>
+              Les curseurs simulent plus de solaire local et de renovation thermique. Les anneaux
+              evoluent pour montrer l'effet possible sur l'autonomie.
+            </p>
+          </article>
+        </div>
+
+        <dl class="about-definitions">
+          <div>
+            <dt>EnR</dt>
+            <dd>Energies renouvelables : solaire, eolien, hydraulique, bioenergies, geothermie.</dd>
+          </div>
+          <div>
+            <dt>Autonomie</dt>
+            <dd>Part de la consommation couverte par la production renouvelable locale.</dd>
+          </div>
+          <div>
+            <dt>Donnees</dt>
+            <dd>Consommation et production issues de l'API Agence ORE, avec secours local si le reseau coupe.</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+  </body>
+</html>
