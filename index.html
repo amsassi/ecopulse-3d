@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>EcoPulse 3D</title>
+    <title>EcoPulse</title>
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
     <link rel="stylesheet" href="styles.css" />
@@ -12,18 +12,19 @@
   </head>
   <body>
     <main class="shell">
-      <section class="map-stage" aria-label="Carte 3D EcoPulse">
+      <section class="map-stage" aria-label="Carte EcoPulse">
         <div id="deck" class="deck-host"></div>
         <div class="scanline"></div>
         <div class="map-vignette"></div>
+        <aside id="site-popup" class="site-popup" hidden aria-live="polite"></aside>
       </section>
 
       <aside class="hud">
         <header class="brand">
           <span class="brand-mark"></span>
           <div class="brand-copy">
-            <h1>EcoPulse 3D</h1>
-            <p>La respiration &eacute;nerg&eacute;tique des territoires</p>
+            <h1>EcoPulse</h1>
+            <p>Le r&eacute;seau renouvelable des territoires</p>
           </div>
           <button id="about-open" class="about-button" type="button" aria-haspopup="dialog">
             &Agrave; propos
@@ -36,13 +37,17 @@
             <strong id="total-consumption">...</strong>
           </div>
           <div>
-            <span>EnR</span>
+            <span>Renouvelable</span>
             <strong id="total-production">...</strong>
           </div>
           <div>
             <span>Autonomie</span>
             <strong id="total-ratio">...</strong>
           </div>
+        </section>
+
+        <section class="panel mix-panel" aria-label="Mix renouvelable">
+          <div id="selected-chart" class="selected-chart" aria-live="polite"></div>
         </section>
 
         <section class="panel controls" aria-label="Commandes">
@@ -67,13 +72,13 @@
 
           <div class="segmented" role="group" aria-label="Vue">
             <button id="view-france" class="active" type="button">France</button>
-            <button id="view-montreuil" type="button">Montreuil</button>
+            <button id="view-montreuil" type="button">&Icirc;le-de-France</button>
           </div>
 
           <label class="toggle">
             <input id="future-toggle" type="checkbox" />
             <span></span>
-            Mode futur
+            Mode simulation
           </label>
 
           <div class="slider-field">
@@ -102,7 +107,7 @@
               <dd id="selected-consumption">...</dd>
             </div>
             <div>
-              <dt>Production EnR</dt>
+              <dt>Production renouvelable</dt>
               <dd id="selected-production">...</dd>
             </div>
             <div>
@@ -113,12 +118,15 @@
         </section>
 
         <section class="legend" aria-label="Code couleur">
-          <h3>Code couleur</h3>
-          <p>EnR = energies renouvelables produites localement.</p>
-          <div><span class="swatch red"></span><strong>Rouge</strong><span>consommation elevee / deficit local</span></div>
-          <div><span class="swatch green"></span><strong>Vert</strong><span>production renouvelable locale forte</span></div>
-          <div><span class="swatch cyan"></span><strong>Bleu</strong><span>flux d'energie des sites vers la region</span></div>
-          <div><span class="swatch amber"></span><strong>Jaune</strong><span>territoire en transition</span></div>
+          <h3>R&eacute;seau &eacute;nerg&eacute;tique</h3>
+          <p>Chaque couleur indique la source principale du lien.</p>
+          <div><span class="swatch national"></span><strong>National</strong><span>maillage inter-r&eacute;gional</span></div>
+          <div><span class="swatch solar"></span><strong>Solaire</strong><span>production photovolta&iuml;que locale</span></div>
+          <div><span class="swatch wind"></span><strong>&Eacute;olien</strong><span>parcs et turbines raccord&eacute;s</span></div>
+          <div><span class="swatch hydro"></span><strong>Hydro</strong><span>ouvrages hydrauliques</span></div>
+          <div><span class="swatch bio"></span><strong>Bio</strong><span>bio&eacute;nergies raccord&eacute;es</span></div>
+          <div><span class="swatch geo"></span><strong>G&eacute;othermie</strong><span>chaleur et sous-sol</span></div>
+          <div><span class="swatch marine"></span><strong>Marin</strong><span>&eacute;nergies marines</span></div>
         </section>
 
         <footer class="source-line">
@@ -137,7 +145,7 @@
       >
         <button id="about-close" class="modal-close" type="button" aria-label="Fermer">&times;</button>
         <p class="modal-kicker">Projet demo</p>
-        <h2 id="about-title">Comprendre EcoPulse 3D</h2>
+        <h2 id="about-title">Comprendre EcoPulse</h2>
         <p id="about-summary">
           EcoPulse compare la consommation d'energie d'un territoire avec sa production locale
           d'energies renouvelables. L'objectif est de voir rapidement les zones sous tension et
@@ -156,28 +164,42 @@
             <h3>Anneaux</h3>
             <p>
               L'anneau rouge exterieur represente la consommation. L'anneau vert ou bleu interieur
-              represente la production EnR locale.
+              represente la production locale d'energies renouvelables.
             </p>
           </article>
           <article>
-            <h3>Flux</h3>
+            <h3>R&eacute;seau</h3>
             <p>
-              Les pictos indiquent le type de site de production. Les pointilles lumineux partent
-              de ces sites et convergent vers le centre de la region, comme une alimentation locale.
+              Les pictos indiquent le type de site de production. Les liens color&eacute;s dessinent un
+              maillage local prolong&eacute; par des connexions entre r&eacute;gions voisines.
             </p>
           </article>
           <article>
-            <h3>Mode futur</h3>
+            <h3>Mode simulation</h3>
             <p>
               Les curseurs simulent plus de solaire local et de renovation thermique. Les anneaux
               evoluent pour montrer l'effet possible sur l'autonomie.
+            </p>
+          </article>
+          <article>
+            <h3>Donn&eacute;es &eacute;nergie</h3>
+            <p>
+              La consommation et la production proviennent de l'Agence ORE Data Fair. EcoPulse
+              interroge les agr&eacute;gats r&eacute;gionaux et les principaux sites d'energies renouvelables en service.
+            </p>
+          </article>
+          <article>
+            <h3>Fiabilit&eacute;</h3>
+            <p>
+              Si l'API ou le r&eacute;seau ne r&eacute;pond pas, l'interface bascule sur un jeu local de secours
+              pour garder la carte consultable sans pr&eacute;senter ces valeurs comme du temps r&eacute;el.
             </p>
           </article>
         </div>
 
         <dl class="about-definitions">
           <div>
-            <dt>EnR</dt>
+            <dt>Renouvelables</dt>
             <dd>Energies renouvelables : solaire, eolien, hydraulique, bioenergies, geothermie.</dd>
           </div>
           <div>
@@ -186,7 +208,11 @@
           </div>
           <div>
             <dt>Donnees</dt>
-            <dd>Consommation et production issues de l'API Agence ORE, avec secours local si le reseau coupe.</dd>
+            <dd>
+              Consommation annuelle d'electricite et de gaz par commune, registre national des
+              installations de production et stockage d'electricite, fond OpenStreetMap et contours
+              regionaux GeoJSON.
+            </dd>
           </div>
         </dl>
       </section>
